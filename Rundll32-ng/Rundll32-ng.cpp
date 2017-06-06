@@ -93,6 +93,8 @@ int wmain(int argc, wchar_t* argv[])
 	}
 
 	int result = 0;
+	SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_NOOPENFILEERRORBOX);
+
 	HINSTANCE hinstLib = loadLibrary(argv[1]);
 	if (hinstLib != NULL)
 	{
