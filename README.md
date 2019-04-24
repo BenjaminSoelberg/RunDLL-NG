@@ -2,8 +2,8 @@
 A replacement for RunDLL32 which works better than the buildin when working with malware.<br>
 
 <pre>
-RunDLL-NG, Version 1.10, (c) 2019 Benjamin Soelberg
----------------------------------------------------
+RunDLL-NG, Version 1.2.0, (c) 2019 Benjamin Soelberg
+----------------------------------------------------
 Email   benjamin.soelberg@gmail.com
 Github  https://github.com/BenjaminSoelberg/RunDLL-NG
 
