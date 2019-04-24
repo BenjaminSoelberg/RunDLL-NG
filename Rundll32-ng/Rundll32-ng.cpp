@@ -123,8 +123,8 @@ void SignalHandler(int signal)
 }
 
 int wmain(int argc, wchar_t* argv[]) {
-	wprintf(L"RunDLL-NG, Version 1.10, (c) 2019 Benjamin Soelberg\r\n");
-	wprintf(L"---------------------------------------------------\r\n");
+	wprintf(L"RunDLL-NG, Version 1.2.0, (c) 2019 Benjamin Soelberg\r\n");
+	wprintf(L"----------------------------------------------------\r\n");
 	wprintf(L"Email   benjamin.soelberg@gmail.com\r\n");
 	wprintf(L"Github  https://github.com/BenjaminSoelberg/RunDLL-NG\r\n\r\n");
 
