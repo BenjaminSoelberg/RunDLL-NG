@@ -1,4 +1,7 @@
 # RunDLL-NG
+
+[![Build status](https://ci.appveyor.com/api/projects/status/nl12snf2j3uisyxw?svg=true)](https://ci.appveyor.com/project/BenjaminSoelberg/rundll-ng)
+
 A replacement for RunDLL32 which works better than the buildin when working with malware.<br>
 
 <pre>
