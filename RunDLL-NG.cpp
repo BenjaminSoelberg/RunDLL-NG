@@ -1,21 +1,26 @@
 /*
   A replacement 32/64 bit for RunDLL32 which works better than the buildin when working with malware.
 */
+#define WIN32_NO_STATUS
+#include <windows.h>
+#undef WIN32_NO_STATUS
+#include <fcntl.h>
+#include <signal.h>
+#include <io.h>
+
 #include <iostream>
 #include <string>
 #include <charconv>
 #include <iomanip>
-#include <windows.h>
-#include <io.h>
-#include <fcntl.h>
-#include <signal.h> 
+
+#include "ModuleUtils.h"
 
 using namespace std;
 
 constexpr auto MAX_IMPORT_NAME_SIZE = 4096;
 typedef UINT(CALLBACK * IMPORTED_FUNCTION)();
 
-void SignalHandler(const int signal) {
+void __CRTDECL SignalHandler(const int signal) {
 	wcout << L"exception (" << signal << L")" << endl;
 	exit(-1);
 }
@@ -55,7 +60,8 @@ void PrintError() {
 	if (pMsgBuf)
 		LocalFree(pMsgBuf);
 }
-string w2s(const wchar_t* w) {
+
+string wc2s(const wchar_t* w) {
 	const auto ws = wstring(w);
 #pragma warning(push)
 #pragma warning(disable: 4244)
@@ -63,17 +69,25 @@ string w2s(const wchar_t* w) {
 #pragma warning(pop)
 }
 
-int w2word(const wchar_t* w) {
-	auto const ns = w2s(w);
+int wc2word(const wchar_t* w) {
+	auto const ns = wc2s(w);
 	int value = 0;
 	const auto end = ns.data() + ns.size();
 	const auto res = from_chars(ns.data(), end, value);
 	return res.ec == errc() && res.ptr == end && value >= 0 && value <= 0xffff ? value : -1;
 }
 
+wstring s2w(const string s) {
+	return wstring(s.begin(), s.end());
+}
+
+wstring c2w(const char* c) {
+	return s2w(string(c));
+}
+
 IMPORTED_FUNCTION ImportNamedFunction(const HINSTANCE hinstLib, const wchar_t* importName) {
 	// Convert W to A
-	auto const importNameA = w2s(importName).c_str();
+	auto const importNameA = wc2s(importName).c_str();
 
 	if (!importNameA) {
 		return nullptr;
@@ -83,12 +97,12 @@ IMPORTED_FUNCTION ImportNamedFunction(const HINSTANCE hinstLib, const wchar_t* i
 	return (IMPORTED_FUNCTION)GetProcAddress(hinstLib, importNameA);
 }
 
-IMPORTED_FUNCTION ImportOrdinalFunction(HINSTANCE hinstLib, int importOrdinal) {
+IMPORTED_FUNCTION ImportOrdinalFunction(const HINSTANCE hinstLib, const int importOrdinal) {
 	// Find import
 	return (IMPORTED_FUNCTION)GetProcAddress(hinstLib, MAKEINTRESOURCEA(importOrdinal));
 }
 
-HMODULE ImportLibrary(wchar_t* libraryPath) {
+HMODULE ImportLibrary(const wchar_t* libraryPath) {
 	HMODULE hinstLib = LoadLibraryEx(libraryPath, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 	wcout << L"Loading module \"" << libraryPath << L"\", ";
 	if (hinstLib == NULL) {
@@ -123,10 +137,19 @@ int wmain(int argc, wchar_t* argv[])
 	}
 	
 	int result = 0;
-	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX); // TODO Test this really works
 
 	HINSTANCE hinstLib = ImportLibrary(argv[1]);
 	if (hinstLib != NULL) {
+
+		// Debug start
+		// std::vector<EXPORT_INFO>* exportInfo = nullptr;
+		// NTSTATUS status = GetExports(hinstLib, &exportInfo);
+		// for (auto x : *exportInfo) {
+		// 	wcout << s2w(x.name) << endl;
+		// }
+		// Debug end start
+
 		if (argc >= 3) {
 			const int START_INDEX = 2;
 			bool firstImportArgFound = false;
@@ -141,7 +164,7 @@ int wmain(int argc, wchar_t* argv[])
 						importedFunction = ImportNamedFunction(hinstLib, &arg[1]); // &arg[1] either points to first char or to null byte
 					} else if (ch == L'#') {
 						firstImportArgFound = true;
-						int importOrdinal = w2word(&arg[1]);
+						int importOrdinal = wc2word(&arg[1]);
 						if (importOrdinal >= 0) {
 							importedFunction = ImportOrdinalFunction(hinstLib, importOrdinal);
 						}
