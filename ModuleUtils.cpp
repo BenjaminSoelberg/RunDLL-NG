@@ -68,11 +68,12 @@ NTSTATUS GetExports(_In_ PVOID DllBase, _Out_ vector<EXPORT_INFO>** exports)
 	PIMAGE_EXPORT_DIRECTORY exportDirectory;
 
 	auto result = new vector<EXPORT_INFO>;
+	NTSTATUS status;
 
-	if (!NT_SUCCESS(PhGetLoaderEntryImageNtHeaders(DllBase, &imageNtHeader)))
-		return STATUS_IMAGE_SUBSYSTEM_NOT_PRESENT;
+	if (!NT_SUCCESS(status = PhGetLoaderEntryImageNtHeaders(DllBase, &imageNtHeader)))
+		return status;
 
-	if (!NT_SUCCESS(PhGetLoaderEntryImageDirectory(
+	if (!NT_SUCCESS(status = PhGetLoaderEntryImageDirectory(
 		DllBase,
 		imageNtHeader,
 		IMAGE_DIRECTORY_ENTRY_EXPORT,
@@ -80,7 +81,7 @@ NTSTATUS GetExports(_In_ PVOID DllBase, _Out_ vector<EXPORT_INFO>** exports)
 		reinterpret_cast<PVOID*>(&exportDirectory),
 		NULL
 	)))
-		return STATUS_IMAGE_SUBSYSTEM_NOT_PRESENT;
+		return status;
 
 	auto exportAddressTable = PTR_ADD_OFFSET<PULONG>(DllBase, exportDirectory->AddressOfFunctions);
 	auto exportNameTable = PTR_ADD_OFFSET<PULONG>(DllBase, exportDirectory->AddressOfNames);
